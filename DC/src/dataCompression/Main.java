@@ -62,6 +62,17 @@ class Node {
 }
 
 
+class File {
+	public static void read() {
+		
+	}
+	
+	public static void write() {
+		
+	}
+}
+
+
 public class Main {
 
 	public static void main(String[] args) {
