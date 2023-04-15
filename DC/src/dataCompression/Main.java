@@ -9,12 +9,14 @@ import java.util.Scanner;
 
 
 class Huffman {
-	public static void encode() {
+	public static boolean encode() {
 		// encode a file
+		return true;
 	}
 	
-	public static void decode() {
+	public static boolean decode() {
 		// decode a file
+		return true;
 	}
 }
 
@@ -63,12 +65,12 @@ class Node {
 
 
 class File {
-	public static void read() {
-		
+	public static void read(String filename) {
+		// reading data from a file
 	}
 	
-	public static void write() {
-		
+	public static void write(String filename) {
+		// writing data to a file
 	}
 }
 
