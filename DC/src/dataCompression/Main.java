@@ -7,25 +7,33 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Scanner;
 
+
 class Huffman {
 	public static void encode() {
-		
+		// encode a file
 	}
 	
 	public static void decode() {
-		
+		// decode a file
 	}
-	
-	public static void buildTree() {
+}
+
+
+class Tree {
+	public static Tree buildTree(String str) {
 		// read a file char by char and record frequency of unique characters
+		Tree t = new Tree();
+		return t;
 	}
 	
-	public static void sortTree() {
+	public static Tree sortTree(Tree t) {
 		// sort a tree in ascending order based on frequencies
+		return t;
 	}
 	
-	public static void readTree() {
+	public static void readTree(Tree t) {
 		// assign binary codes to each character
+		// output character and corresponding code array
 	}
 }
 
