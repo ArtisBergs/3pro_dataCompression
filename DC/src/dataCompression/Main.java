@@ -7,9 +7,54 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Scanner;
 
+class Huffman {
+	public static void encode() {
+		
+	}
+	
+	public static void decode() {
+		
+	}
+	
+	public static void buildTree() {
+		// read a file char by char and record frequency of unique characters
+	}
+	
+	public static void sortTree() {
+		// sort a tree in ascending order based on frequencies
+	}
+	
+	public static void readTree() {
+		// assign binary codes to each character
+	}
+}
+
+
+class Node {
+	public static char getChar(){
+		// nolasa virsotnes vērtību
+		char ch = ' ';
+		return ch;
+	}
+	public static int getFreq(){
+		// nolasa virsotnes biežumu
+		int f = 0;
+		return f;
+	}
+	public static Node getLeft(){
+		// nolasa virsotnes kreiso bērnu
+		Node n = new Node();
+		return n;
+	}
+	public static Node getRight(){
+		// nolasa virsotnes labo bērnu
+		Node n = new Node();
+		return n;
+	}
+}
+
 
 public class Main {
-
 
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
