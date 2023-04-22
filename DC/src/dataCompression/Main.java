@@ -126,10 +126,12 @@ public class Main {
 
 	public static void comp(String sourceFile, String resultFile) {
 		// TODO: implement this method
+		Huffman.encode();
 	}
 
 	public static void decomp(String sourceFile, String resultFile) {
 		// TODO: implement this method
+		Huffman.decode();
 	}
 	
 	public static void size(String sourceFile) {
