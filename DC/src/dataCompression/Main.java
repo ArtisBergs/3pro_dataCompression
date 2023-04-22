@@ -9,12 +9,12 @@ import java.util.Scanner;
 
 
 class Huffman {
-	public static boolean encode() {
+	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
 		return true;
 	}
 	
-	public static boolean decode() {
+	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
 		return true;
 	}
@@ -126,12 +126,12 @@ public class Main {
 
 	public static void comp(String sourceFile, String resultFile) {
 		// TODO: implement this method
-		Huffman.encode();
+		Huffman.encode(sourceFile, resultFile);
 	}
 
 	public static void decomp(String sourceFile, String resultFile) {
 		// TODO: implement this method
-		Huffman.decode();
+		Huffman.decode(sourceFile, resultFile);
 	}
 	
 	public static void size(String sourceFile) {
