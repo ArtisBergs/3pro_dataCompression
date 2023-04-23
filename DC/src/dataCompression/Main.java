@@ -4,73 +4,267 @@ package dataCompression;
 // 221RDB134 Artis Bergs
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.HashMap;
 import java.util.Scanner;
+import java.io.File;
+import java.io.IOException;
 
 
 class Huffman {
+	public static List<Integer> charArr = new ArrayList<Integer>();
+	public static List<Integer> freqArr = new ArrayList<Integer>();
+	public static List<Node> nodeArr = new ArrayList<Node>();
+	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
+		
+		// read a file and fill arrays
+		Files.read(sourceFile);
+		if(charArr.isEmpty())
+			return false;
+		
+		// sort arrays
+		boolean flag = false;
+		while(flag == false) {
+			flag = true;
+			for(int i=0; i<freqArr.size()-1 ; i++) {
+				if(freqArr.get(i) > freqArr.get(i+1)) {
+					flag = false;
+					
+					int temp1 = freqArr.get(i);
+					int temp2 = charArr.get(i);
+					
+					freqArr.set(i, freqArr.get(i+1));
+					charArr.set(i, charArr.get(i+1));
+					
+					freqArr.set(i+1, temp1);
+					charArr.set(i+1, temp2);
+				}
+			}
+		}
+		
+		// output for testing purposes only
+		for(int i=0; i<charArr.size(); i++) {
+			if(freqArr.get(i) != 0)
+				System.out.println(charArr.get(i) + " " + freqArr.get(i));
+		}
+		
+		// digging the tree
+		Tree.build();
+		
+		//Files.write(resultFile);
 		return true;
 	}
 	
 	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
+		//Files.read(sourceFile);
+		//Files.write(resultFile);
 		return true;
 	}
 }
 
 
 class Tree {
-	public static Tree buildTree(String str) {
-		// read a file char by char and record frequency of unique characters
-		Tree t = new Tree();
-		return t;
+	public static void build() {
+		for(int i=0; i<Huffman.charArr.size(); i++) {
+			Node n = new Node();
+			n.ch = Huffman.charArr.get(i);
+			n.fr = Huffman.freqArr.get(i);
+			Huffman.nodeArr.add(n);
+		}
+		
+		sort();
+		
+		read(Huffman.nodeArr.get(0), "");
 	}
 	
-	public static Tree sortTree(Tree t) {
+	private static void sort() {
 		// sort a tree in ascending order based on frequencies
-		return t;
+		while(Huffman.nodeArr.size() > 1) {
+			Node x = Huffman.nodeArr.get(0);
+			Node y = Huffman.nodeArr.get(1);
+			
+			Node z = new Node();
+			z.left = x;
+			z.right = y;
+			z.fr = x.fr + y.fr;
+			z.ch = -1;
+
+			Huffman.nodeArr.remove(0);
+			Huffman.nodeArr.remove(0);
+
+			Huffman.nodeArr.add(z);
+			
+			// sort
+			for(int i=Huffman.nodeArr.size()-1; i>0; i--) {
+				if (Huffman.nodeArr.get(i).fr < Huffman.nodeArr.get(i-1).fr) {
+					Node temp = Huffman.nodeArr.get(i);
+					Huffman.nodeArr.set(i, Huffman.nodeArr.get(i-1));
+					Huffman.nodeArr.set(i-1, temp);
+				} else break;
+			}
+		}
+		
+		// output for testing purposes only
+		//System.out.println();
+		//for(Node n : Huffman.nodeArr)
+			//System.out.println(n.ch + " " + n.fr);
 	}
 	
-	public static void readTree(Tree t) {
+	private static void read(Node n, String code) {
 		// assign binary codes to each character
 		// output character and corresponding code array
+
+		if(n == null)
+			return;
+		
+		if(n.left == null && n.right == null) {
+			System.out.println(n.ch + " " + code);
+			return;
+		}
+		
+		read(n.left, code + "0");
+		read(n.right, code + "1");
 	}
 }
 
 
 class Node {
-	public static char getChar(){
+	public int ch;
+	public int fr;
+	public Node left;
+	public Node right;
+	
+	public int getChar(){
 		// nolasa virsotnes vērtību
-		char ch = ' ';
-		return ch;
+		return this.ch;
 	}
-	public static int getFreq(){
+	public int getFreq(){
 		// nolasa virsotnes biežumu
-		int f = 0;
-		return f;
+		return this.fr;
 	}
-	public static Node getLeft(){
+	public Node getLeft(){
 		// nolasa virsotnes kreiso bērnu
-		Node n = new Node();
-		return n;
+		return this.left;
 	}
-	public static Node getRight(){
+	public Node getRight(){
 		// nolasa virsotnes labo bērnu
-		Node n = new Node();
-		return n;
+		return this.right;
 	}
 }
 
 
-class File {
+class Files {
+	// InputStream
+	// FileInputStream (bytes), DataInputStream (datatypes), ObjectInputStream (objects)
+	
 	public static void read(String filename) {
 		// reading data from a file
+		Files.fillArrays(filename);
 	}
+	
+	// read a file char by char and record frequency of unique characters
+	private static void fillArrays(String filename) {
+		File f = new File(filename);
+		if(f.exists()) {
+			try {
+				FileInputStream fis = new FileInputStream(f);
+				int i;
+				while (true) {
+					i = fis.read();
+					if(i == -1)
+						break;
+					
+					// Huffman array operations
+					if(Huffman.charArr.contains(i)) {
+						int ind = Huffman.charArr.indexOf(i);
+						int val = Huffman.freqArr.get(ind);
+						Huffman.freqArr.set(ind, ++val);
+					} else {
+						Huffman.charArr.add(i);
+						Huffman.freqArr.add(1);
+					}
+				}
+				fis.close();
+			}
+			catch(Exception e) {
+				// System.out.println(e.getMessage());
+				return;
+			}
+		} // else System.out.println("File does not exist!");
+	}
+	
+	private static void readMultipleBytes(String filename) {
+		try {
+			FileInputStream fis = new FileInputStream(filename);
+			int i, k;
+			byte mas[] = new byte[20];
+			do {
+				k = fis.read(mas);
+				for(i=0; i<k; i++)
+					System.out.println(mas[i]);
+			} while (k != 0);
+			fis.close();
+		}
+		catch(Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
+	}
+	
+	private static void readSmallBytes(String filename) {
+		try {
+			FileInputStream fis = new FileInputStream(filename);
+			int i;
+			byte mas[] = new byte[fis.available()];
+			fis.read(mas);
+			fis.close();
+			for(i=0; i<mas.length; i++)
+				System.out.println(mas[i]);
+		}
+		catch(Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
+	}
+	
+	// OutputStream
+	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
 	public static void write(String filename) {
 		// writing data to a file
+		try {
+			Files.writeSingleBytes(filename);
+		} catch(Exception e) {
+			System.out.println(e.getMessage());
+			return;
+		}
+	}
+	
+	private static void writeSingleBytes(String filename) throws IOException {
+		FileOutputStream fos = new FileOutputStream(filename);
+		String text = "to be or not to be";
+		byte buf[] = text.getBytes();
+		for(int i=0; i<buf.length; i++)
+			fos.write(buf[i]);
+		fos.close();
+	}
+	
+	private static void writeMultipleBytes(String filename) throws IOException {
+		FileOutputStream fos = new FileOutputStream(filename);
+		String text = "to be or not to be";
+		byte buf[] = text.getBytes();
+		fos.write(buf);
+		fos.close();
 	}
 }
 
