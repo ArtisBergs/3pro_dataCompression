@@ -6,6 +6,8 @@ package dataCompression;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -74,12 +76,7 @@ class Huffman {
 		System.out.println(codeStr);
 		
 		// divide binary string and.. convert to integers
-		int nr;
 		String[] arr = codeStr.split("(?<=\\G.{8})");
-		for(String s : arr) {
-			nr = Integer.parseInt(s, 2);
-			System.out.println(s + " " + nr);
-		}
 		
 		Files.write(resultFile, arr);
 		return true;
@@ -87,7 +84,9 @@ class Huffman {
 	
 	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
-		//Files.read(sourceFile);
+		
+		System.out.println(Files.read(sourceFile, 3));
+		
 		//Files.write(resultFile);
 		return true;
 	}
@@ -196,6 +195,8 @@ class Files {
 			str = Files.fillArrays(filename);
 		if(option == 2)
 			str = Files.compileString(filename);
+		if(option == 3)
+			str = Files.readSingleBytes(filename);
 		
 		return str;
 	}
@@ -259,6 +260,39 @@ class Files {
 		return str;
 	}
 	
+	// read a file char by char and output result plus generate original string
+	private static String readSingleBytes(String filename) {
+		String str = "";
+		File f = new File(filename);
+		if(f.exists()) {
+			try {
+				FileInputStream fis = new FileInputStream(f);
+				int i;
+				while (true) {
+					i = fis.read();
+					if(i == -1)
+						break;
+					
+					// Huffman string operations
+					String s = Integer.toBinaryString(i);
+					if(s.length() < 8) {
+						for(int c=s.length(); c<8; c++)
+							s = "0" + s;
+					}
+					System.out.println(s + " " + i);
+					str += s;
+
+				}
+				fis.close();
+			}
+			catch(Exception e) {
+				// System.out.println(e.getMessage());
+				return "";
+			}
+		} // else System.out.println("File does not exist!");
+		return str;
+	}
+	
 	private static void readMultipleBytes(String filename) {
 		try {
 			FileInputStream fis = new FileInputStream(filename);
@@ -296,20 +330,36 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	public static void write(String filename, String[] data) {
+	public static boolean write(String filename, String[] data) {
 		// writing data to a file
 		try {
-			Files.writeSingleBytes(filename, data);
+			Files.writeSingleData(filename, data);
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
-			return;
+			return false;
 		}
+		
+		return true;
 	}
 	
-	private static void writeSingleBytes(String filename, String[] data) throws IOException {
+	private static void writeSingleData(String filename, String[] data) throws IOException {
+		DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename));
+		System.out.println("Result:");
+		int nr;
+		for(int i=0; i<data.length; i++) {
+			nr = Integer.parseInt(data[i].trim(), 2);
+			System.out.println(data[i] + " " + nr);
+			dos.writeByte(nr);
+		}
+		dos.close();
+	}
+	
+	private static void writeSingleBytes(String filename, String text) throws IOException {
 		FileOutputStream fos = new FileOutputStream(filename);
-		String text = "to be or not to be";
+		// String text = "to be or not to be";
 		byte buf[] = text.getBytes();
+		//for(byte b : buf)
+			//System.out.println(b);
 		for(int i=0; i<buf.length; i++)
 			fos.write(buf[i]);
 		fos.close();
