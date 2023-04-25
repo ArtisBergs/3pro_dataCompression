@@ -73,7 +73,7 @@ class Huffman {
 		System.out.println("Code string:");
 		System.out.println(codeStr);
 		
-		// divide binary string and convert to integers
+		// divide binary string and.. convert to integers
 		int nr;
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		for(String s : arr) {
