@@ -3,6 +3,7 @@ package dataCompression;
 // 211RDB330 Kārlis Jurgens
 // 221RDB134 Artis Bergs
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,24 +11,23 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.HashMap;
 import java.util.Scanner;
-import java.io.File;
-import java.io.IOException;
 
 
 class Huffman {
 	public static List<Integer> charArr = new ArrayList<Integer>();
 	public static List<Integer> freqArr = new ArrayList<Integer>();
 	public static List<Node> nodeArr = new ArrayList<Node>();
+	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
 	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
 		
 		// read a file and fill arrays
-		Files.read(sourceFile);
+		Files.read(sourceFile, 1);
 		if(charArr.isEmpty())
 			return false;
 		
@@ -52,6 +52,7 @@ class Huffman {
 		}
 		
 		// output for testing purposes only
+		System.out.println("Count:");
 		for(int i=0; i<charArr.size(); i++) {
 			if(freqArr.get(i) != 0)
 				System.out.println(charArr.get(i) + " " + freqArr.get(i));
@@ -60,7 +61,27 @@ class Huffman {
 		// digging the tree
 		Tree.build();
 		
-		//Files.write(resultFile);
+		// output2 for testing purposes only
+		System.out.println("Codes:");
+		for(int num : dictArr.keySet())
+			System.out.println(num + " " + dictArr.get(num));
+		
+		// recreate data
+		String codeStr = Files.read(sourceFile, 2);
+		
+		// output3 for testing purposes only
+		System.out.println("Code string:");
+		System.out.println(codeStr);
+		
+		// divide binary string and convert to integers
+		int nr;
+		String[] arr = codeStr.split("(?<=\\G.{8})");
+		for(String s : arr) {
+			nr = Integer.parseInt(s, 2);
+			System.out.println(s + " " + nr);
+		}
+		
+		Files.write(resultFile, arr);
 		return true;
 	}
 	
@@ -128,7 +149,7 @@ class Tree {
 			return;
 		
 		if(n.left == null && n.right == null) {
-			System.out.println(n.ch + " " + code);
+			Huffman.dictArr.put(n.ch, code);
 			return;
 		}
 		
@@ -167,13 +188,20 @@ class Files {
 	// InputStream
 	// FileInputStream (bytes), DataInputStream (datatypes), ObjectInputStream (objects)
 	
-	public static void read(String filename) {
+	public static String read(String filename, int option) {
 		// reading data from a file
-		Files.fillArrays(filename);
+		String str = "";
+		
+		if(option == 1)
+			str = Files.fillArrays(filename);
+		if(option == 2)
+			str = Files.compileString(filename);
+		
+		return str;
 	}
 	
 	// read a file char by char and record frequency of unique characters
-	private static void fillArrays(String filename) {
+	private static String fillArrays(String filename) {
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
@@ -198,9 +226,37 @@ class Files {
 			}
 			catch(Exception e) {
 				// System.out.println(e.getMessage());
-				return;
+				return "";
 			}
 		} // else System.out.println("File does not exist!");
+		return "";
+	}
+	
+	// read a file char by char and translate into new codes
+	private static String compileString(String filename) {
+		String str = "";
+		File f = new File(filename);
+		if(f.exists()) {
+			try {
+				FileInputStream fis = new FileInputStream(f);
+				int i;
+				while (true) {
+					i = fis.read();
+					if(i == -1)
+						break;
+					
+					// Huffman string operations
+					str += Huffman.dictArr.get(i);
+
+				}
+				fis.close();
+			}
+			catch(Exception e) {
+				// System.out.println(e.getMessage());
+				return "";
+			}
+		} // else System.out.println("File does not exist!");
+		return str;
 	}
 	
 	private static void readMultipleBytes(String filename) {
@@ -240,17 +296,17 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	public static void write(String filename) {
+	public static void write(String filename, String[] data) {
 		// writing data to a file
 		try {
-			Files.writeSingleBytes(filename);
+			Files.writeSingleBytes(filename, data);
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			return;
 		}
 	}
 	
-	private static void writeSingleBytes(String filename) throws IOException {
+	private static void writeSingleBytes(String filename, String[] data) throws IOException {
 		FileOutputStream fos = new FileOutputStream(filename);
 		String text = "to be or not to be";
 		byte buf[] = text.getBytes();
