@@ -33,11 +33,16 @@ class Huffman {
 		dictArr.clear();
 		
 		// read a file and fill arrays
+		long startTime = System.nanoTime();
 		Files.read(sourceFile, 1);
 		if(charArr.isEmpty())
 			return false;
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		System.out.println(duration/1000000);
 		
 		// sort arrays
+		startTime = System.nanoTime();
 		boolean flag = false;
 		while(flag == false) {
 			flag = true;
@@ -56,34 +61,49 @@ class Huffman {
 				}
 			}
 		}
+		endTime = System.nanoTime();
+		duration = (endTime - startTime);
+		System.out.println(duration/1000000);
 		
 		// output for testing purposes only
 		System.out.println("Count:");
-		for(int i=0; i<charArr.size(); i++) {
-			if(freqArr.get(i) != 0)
-				System.out.println(charArr.get(i) + " " + freqArr.get(i));
-		}
+		//for(int i=0; i<charArr.size(); i++) {
+			//if(freqArr.get(i) != 0)
+				//System.out.println(charArr.get(i) + " " + freqArr.get(i));
+		//}
 		
 		// digging the tree
+		startTime = System.nanoTime();
 		Tree.build();
+		endTime = System.nanoTime();
+		duration = (endTime - startTime);
+		System.out.println(duration/1000000);
 		
 		// output2 for testing purposes only
 		System.out.println("Codes:");
-		for(int num : dictArr.keySet())
-			System.out.println(num + " " + dictArr.get(num));
+		//for(int num : dictArr.keySet())
+			//System.out.println(num + " " + dictArr.get(num));
 		
 		// recreate data
+		startTime = System.nanoTime();
 		String codeStr = Files.read(sourceFile, 2);
+		endTime = System.nanoTime();
+		duration = (endTime - startTime);
+		System.out.println(duration/1000000);
 		
 		// output3 for testing purposes only
 		System.out.println("Code string:");
-		System.out.println(codeStr);
+		//System.out.println(codeStr);
 		
 		// divide binary string into 8-bit array
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
 		// convert bytes to integers and finish
+		startTime = System.nanoTime();
 		Files.write(resultFile, arr);
+		endTime = System.nanoTime();
+		duration = (endTime - startTime);
+		System.out.println(duration/1000000);
 		
 		return true;
 	}
@@ -365,7 +385,7 @@ class Files {
 		for(int i=0; i<data.length; i++) {
 			dt = data[i].trim();
 			nr = Integer.parseInt(dt, 2);
-			System.out.println(dt + " " + nr);
+			//System.out.println(dt + " " + nr);
 			dos.writeByte(nr);
 		}
 		dos.writeByte(dt.length());
