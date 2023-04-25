@@ -27,6 +27,10 @@ class Huffman {
 	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
+		charArr.clear();
+		freqArr.clear();
+		nodeArr.clear();
+		dictArr.clear();
 		
 		// read a file and fill arrays
 		Files.read(sourceFile, 1);
@@ -75,10 +79,12 @@ class Huffman {
 		System.out.println("Code string:");
 		System.out.println(codeStr);
 		
-		// divide binary string and.. convert to integers
+		// divide binary string into 8-bit array
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
+		// convert bytes to integers and finish
 		Files.write(resultFile, arr);
+		
 		return true;
 	}
 	
@@ -263,6 +269,7 @@ class Files {
 	// read a file char by char and output result plus generate original string
 	private static String readSingleBytes(String filename) {
 		String str = "";
+		int lastByte = 8;
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
@@ -274,6 +281,7 @@ class Files {
 						break;
 					
 					// Huffman string operations
+					lastByte = i;
 					String s = Integer.toBinaryString(i);
 					if(s.length() < 8) {
 						for(int c=s.length(); c<8; c++)
@@ -284,6 +292,13 @@ class Files {
 
 				}
 				fis.close();
+				
+				// Huffman correction
+				if(lastByte < 8) {
+					String tmp = str.substring(str.length()-8-lastByte, str.length()-8);
+					str = str.substring(0, str.length()-16) + tmp;
+				} else str = str.substring(0, str.length()-8);
+				
 			}
 			catch(Exception e) {
 				// System.out.println(e.getMessage());
@@ -346,11 +361,14 @@ class Files {
 		DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename));
 		System.out.println("Result:");
 		int nr;
+		String dt = "";
 		for(int i=0; i<data.length; i++) {
-			nr = Integer.parseInt(data[i].trim(), 2);
-			System.out.println(data[i] + " " + nr);
+			dt = data[i].trim();
+			nr = Integer.parseInt(dt, 2);
+			System.out.println(dt + " " + nr);
 			dos.writeByte(nr);
 		}
+		dos.writeByte(dt.length());
 		dos.close();
 	}
 	
