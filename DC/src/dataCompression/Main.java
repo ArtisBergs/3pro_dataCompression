@@ -17,13 +17,14 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Scanner;
+import java.io.Serializable;
 
 
 class Huffman {
 	public static List<Integer> charArr = new ArrayList<Integer>();
 	public static List<Integer> freqArr = new ArrayList<Integer>();
 	public static List<Node> nodeArr = new ArrayList<Node>();
-	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
+	public static Map<Integer, String> dictArr = new HashMap<Integer, String>();
 	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
@@ -100,7 +101,7 @@ class Huffman {
 		
 		// convert bytes to integers and finish
 		startTime = System.nanoTime();
-		Files.write(resultFile, arr);
+		Files.write(resultFile, arr, dictArr);
 		endTime = System.nanoTime();
 		duration = (endTime - startTime);
 		System.out.println(duration/1000000);
@@ -112,6 +113,22 @@ class Huffman {
 		// decode a file
 		
 		System.out.println(Files.read(sourceFile, 3));
+		
+//        String ans = "";
+//        MinHeapNode curr = root;
+//        int n = s.length();
+//        for (int i = 0; i < n; i++) {
+//            if (s.charAt(i) == '0') {
+//                curr = curr.left;
+//            } else {
+//                curr = curr.right;
+//            }
+//            if (curr.left == null && curr.right == null) {
+//                ans += curr.data;
+//                curr = root;
+//            }
+//        }
+//        return ans + '\0';
 		
 		//Files.write(resultFile);
 		return true;
@@ -262,6 +279,8 @@ class Files {
 	// read a file char by char and translate into new codes
 	private static String compileString(String filename) {
 		String str = "";
+		String[] m;
+		StringBuilder sb = new StringBuilder();
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
@@ -273,10 +292,12 @@ class Files {
 						break;
 					
 					// Huffman string operations
-					str += Huffman.dictArr.get(i);
+					//str += Huffman.dictArr.get(i);
+					sb.append(Huffman.dictArr.get(i));
 
 				}
 				fis.close();
+				str=sb.toString();
 			}
 			catch(Exception e) {
 				// System.out.println(e.getMessage());
@@ -365,10 +386,10 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	public static boolean write(String filename, String[] data) {
+	public static boolean write(String filename, String[] data, Map<Integer, String> dict) {
 		// writing data to a file
 		try {
-			Files.writeSingleData(filename, data);
+			Files.writeSingleData(filename, data, dict);
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			return false;
@@ -377,7 +398,8 @@ class Files {
 		return true;
 	}
 	
-	private static void writeSingleData(String filename, String[] data) throws IOException {
+	private static void writeSingleData(String filename, String[] data, Map<Integer, String> dict) throws IOException {
+		//byte[] d = Serializable.serialize(dict);
 		DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename));
 		System.out.println("Result:");
 		int nr;
