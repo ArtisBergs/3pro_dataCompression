@@ -111,26 +111,30 @@ class Huffman {
 	
 	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
+		StringBuilder sb = new StringBuilder();
 		
-		System.out.println(Files.read(sourceFile, 3));
+		Node curr = nodeArr.get(0);
 		
-//        String ans = "";
-//        MinHeapNode curr = root;
-//        int n = s.length();
-//        for (int i = 0; i < n; i++) {
-//            if (s.charAt(i) == '0') {
-//                curr = curr.left;
-//            } else {
-//                curr = curr.right;
-//            }
-//            if (curr.left == null && curr.right == null) {
-//                ans += curr.data;
-//                curr = root;
-//            }
-//        }
-//        return ans + '\0';
+		String bin = Files.read(sourceFile, 3);
+		System.out.println(bin);
 		
-		//Files.write(resultFile);
+        int n = bin.length();
+        for (int i = 0; i < n; i++) {
+            if (bin.charAt(i) == '0') {
+                curr = curr.left;
+            } else {
+                curr = curr.right;
+            }
+            if (curr.left == null && curr.right == null) {
+                sb.append((char)curr.ch);
+                curr = nodeArr.get(0);
+            }
+        }
+        
+        String ans = sb.toString();
+        System.out.println(ans + '\0');
+        
+		//Files.write(resultFile, ans);
 		return true;
 	}
 }
@@ -328,7 +332,7 @@ class Files {
 						for(int c=s.length(); c<8; c++)
 							s = "0" + s;
 					}
-					System.out.println(s + " " + i);
+					//System.out.println(s + " " + i);
 					str += s;
 
 				}
