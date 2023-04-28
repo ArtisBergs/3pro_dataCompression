@@ -18,13 +18,16 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.Scanner;
 import java.io.Serializable;
-
+import java.io.ObjectOutputStream;
+import java.io.ObjectInputStream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 class Huffman {
 	public static List<Integer> charArr = new ArrayList<Integer>();
 	public static List<Integer> freqArr = new ArrayList<Integer>();
 	public static List<Node> nodeArr = new ArrayList<Node>();
-	public static Map<Integer, String> dictArr = new HashMap<Integer, String>();
+	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
 	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
@@ -101,7 +104,7 @@ class Huffman {
 		
 		// convert bytes to integers and finish
 		startTime = System.nanoTime();
-		Files.write(resultFile, arr, dictArr);
+		Files.write(resultFile, arr, nodeArr);
 		endTime = System.nanoTime();
 		duration = (endTime - startTime);
 		System.out.println(duration/1000000);
@@ -134,8 +137,7 @@ class Huffman {
         String ans = sb.toString();
         System.out.println(ans + '\0');
         
-		//Files.write(resultFile, ans);
-		return true;
+		return Files.write2(resultFile, ans);
 	}
 }
 
@@ -205,7 +207,7 @@ class Tree {
 }
 
 
-class Node {
+class Node implements Serializable {
 	public int ch;
 	public int fr;
 	public Node left;
@@ -319,9 +321,19 @@ class Files {
 		if(f.exists()) {
 			try {
 				FileInputStream fis = new FileInputStream(f);
+				ObjectInputStream ois = new ObjectInputStream(fis);
+				
+				Huffman.nodeArr = (List<Node>)ois.readObject();
+				//for(Node n : ln)
+					//System.out.println(n.ch);
+				
+				//Byte[] nl = (Byte[])ois.readObject();
+				//for(Byte l : nl)
+					//System.out.println(l);
+				
 				int i;
 				while (true) {
-					i = fis.read();
+					i = ois.read();
 					if(i == -1)
 						break;
 					
@@ -331,11 +343,14 @@ class Files {
 					if(s.length() < 8) {
 						for(int c=s.length(); c<8; c++)
 							s = "0" + s;
+					}else if (s.length() > 8) {
+						s = s.substring(s.length()-8, s.length());
 					}
-					//System.out.println(s + " " + i);
+					System.out.println(s + " " + i);
 					str += s;
 
 				}
+				ois.close();
 				fis.close();
 				
 				// Huffman correction
@@ -390,8 +405,8 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	public static boolean write(String filename, String[] data, Map<Integer, String> dict) {
-		// writing data to a file
+	public static boolean write(String filename, String[] data, List<Node> dict) {
+		// writing to a dat file
 		try {
 			Files.writeSingleData(filename, data, dict);
 		} catch(Exception e) {
@@ -402,20 +417,56 @@ class Files {
 		return true;
 	}
 	
-	private static void writeSingleData(String filename, String[] data, Map<Integer, String> dict) throws IOException {
-		//byte[] d = Serializable.serialize(dict);
-		DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename));
+	public static boolean write2(String filename, String data) {
+		// writing to a string file
+		try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+            writer.write(data);
+            writer.close();
+            //System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            //System.out.println("An error occurred.");
+            e.printStackTrace();
+            return false;
+        }
+		
+		return true;
+	}
+	
+	private static void writeSingleData(String filename, String[] data, List<Node> dict) throws IOException {
 		System.out.println("Result:");
+//		Byte[] toFile = new Byte[data.length+1];
+//		int nr;
+//		String dt = "";
+//		for(int i=0; i<data.length; i++) {
+//			dt = data[i].trim();
+//			nr = Integer.parseInt(dt, 2);
+//			System.out.println(dt + " " + nr);
+//			toFile[i] = (byte)nr;
+//		}
+//		toFile[data.length] = (byte)dt.length();
+		
+		
+		// serialize?
+		FileOutputStream fos = new FileOutputStream(filename);
+		ObjectOutputStream oos = new ObjectOutputStream(fos);
+		oos.writeObject(dict);
+		
+		//oos.writeObject(toFile);
+		//for(Byte b : toFile)
+			//oos.writeByte(b);
 		int nr;
 		String dt = "";
 		for(int i=0; i<data.length; i++) {
 			dt = data[i].trim();
 			nr = Integer.parseInt(dt, 2);
 			//System.out.println(dt + " " + nr);
-			dos.writeByte(nr);
+			oos.writeByte(nr);
 		}
-		dos.writeByte(dt.length());
-		dos.close();
+		oos.writeByte(dt.length());
+		
+		oos.close();
+		fos.close();
 	}
 	
 	private static void writeSingleBytes(String filename, String text) throws IOException {
