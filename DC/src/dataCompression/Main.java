@@ -104,12 +104,12 @@ class Huffman {
 		
 		// convert bytes to integers and finish
 		startTime = System.nanoTime();
-		Files.write(resultFile, arr, nodeArr);
+		boolean res = Files.write(resultFile, arr, nodeArr);
 		endTime = System.nanoTime();
 		duration = (endTime - startTime);
 		System.out.println(duration/1000000);
 		
-		return true;
+		return res;
 	}
 	
 	public static boolean decode(String sourceFile, String resultFile) {
@@ -119,7 +119,7 @@ class Huffman {
 		Node curr = nodeArr.get(0);
 		
 		String bin = Files.read(sourceFile, 3);
-		System.out.println(bin);
+		//System.out.println(bin);
 		
         int n = bin.length();
         for (int i = 0; i < n; i++) {
@@ -135,7 +135,7 @@ class Huffman {
         }
         
         String ans = sb.toString();
-        System.out.println(ans + '\0');
+        //System.out.println(ans + '\0');
         
 		return Files.write2(resultFile, ans);
 	}
@@ -315,6 +315,7 @@ class Files {
 	
 	// read a file char by char and output result plus generate original string
 	private static String readSingleBytes(String filename) {
+		StringBuilder sb = new StringBuilder();
 		String str = "";
 		int lastByte = 8;
 		File f = new File(filename);
@@ -340,20 +341,25 @@ class Files {
 					// Huffman string operations
 					lastByte = i;
 					String s = Integer.toBinaryString(i);
+					
+					// Huffman eachByte correction
 					if(s.length() < 8) {
 						for(int c=s.length(); c<8; c++)
 							s = "0" + s;
 					}else if (s.length() > 8) {
 						s = s.substring(s.length()-8, s.length());
 					}
-					System.out.println(s + " " + i);
-					str += s;
-
+					
+					//System.out.println(s + " " + i);
+					//str += s;
+					sb.append(s);
 				}
+				
 				ois.close();
 				fis.close();
+				str = sb.toString();
 				
-				// Huffman correction
+				// Huffman lastByte correction
 				if(lastByte < 8) {
 					String tmp = str.substring(str.length()-8-lastByte, str.length()-8);
 					str = str.substring(0, str.length()-16) + tmp;
@@ -541,12 +547,12 @@ public class Main {
 
 	public static void comp(String sourceFile, String resultFile) {
 		// TODO: implement this method
-		Huffman.encode(sourceFile, resultFile);
+		System.out.println(Huffman.encode(sourceFile, resultFile));
 	}
 
 	public static void decomp(String sourceFile, String resultFile) {
 		// TODO: implement this method
-		Huffman.decode(sourceFile, resultFile);
+		System.out.println(Huffman.decode(sourceFile, resultFile));
 	}
 	
 	public static void size(String sourceFile) {
