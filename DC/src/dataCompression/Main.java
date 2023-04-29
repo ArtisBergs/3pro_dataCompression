@@ -28,6 +28,7 @@ class Huffman {
 	public static List<Integer> freqArr = new ArrayList<Integer>();
 	public static List<Node> nodeArr = new ArrayList<Node>();
 	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
+	public static int total = 0;
 	
 	public static boolean encode(String sourceFile, String resultFile) {
 		// encode a file
@@ -35,6 +36,7 @@ class Huffman {
 		freqArr.clear();
 		nodeArr.clear();
 		dictArr.clear();
+		total = 0;
 		
 		// read a file and fill arrays
 		long startTime = System.nanoTime();
@@ -116,10 +118,12 @@ class Huffman {
 		// decode a file
 		StringBuilder sb = new StringBuilder();
 		
-		Node curr = nodeArr.get(0);
-		
 		String bin = Files.read(sourceFile, 3);
 		//System.out.println(bin);
+		Node curr = nodeArr.get(0);
+		
+		int temp = 0;
+		byte[] res = new byte[total];
 		
         int n = bin.length();
         for (int i = 0; i < n; i++) {
@@ -129,15 +133,18 @@ class Huffman {
                 curr = curr.right;
             }
             if (curr.left == null && curr.right == null) {
-                sb.append((char)curr.ch);
+            	//System.out.print(curr.ch + " " + (byte)curr.ch + " ");
+                //sb.append((char)curr.ch);
+                res[temp]=(byte)curr.ch;
+                temp++;
                 curr = nodeArr.get(0);
             }
         }
         
         String ans = sb.toString();
-        //System.out.println(ans + '\0');
+        System.out.println(ans + " " + temp);
         
-		return Files.write2(resultFile, ans);
+		return Files.write3(resultFile, res);
 	}
 }
 
@@ -262,6 +269,9 @@ class Files {
 					if(i == -1)
 						break;
 					
+					Huffman.total++;
+					//System.out.print(i + " " + (char)i + " ");
+					//System.out.println();
 					// Huffman array operations
 					if(Huffman.charArr.contains(i)) {
 						int ind = Huffman.charArr.indexOf(i);
@@ -285,7 +295,6 @@ class Files {
 	// read a file char by char and translate into new codes
 	private static String compileString(String filename) {
 		String str = "";
-		String[] m;
 		StringBuilder sb = new StringBuilder();
 		File f = new File(filename);
 		if(f.exists()) {
@@ -427,6 +436,24 @@ class Files {
 		// writing to a string file
 		try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
+            writer.write(data);
+            writer.close();
+            //System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            //System.out.println("An error occurred.");
+            e.printStackTrace();
+            return false;
+        }
+		
+		return true;
+	}
+	
+	public static boolean write3(String filename, byte[] data) {
+		// writing to a string file
+		//for(byte d : data)
+			//System.out.println(d);
+		try {
+            FileOutputStream writer = new FileOutputStream(filename);
             writer.write(data);
             writer.close();
             //System.out.println("Successfully wrote to the file.");
