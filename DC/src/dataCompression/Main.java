@@ -16,8 +16,7 @@ import java.util.Scanner;
 import java.io.Serializable;
 import java.io.ObjectOutputStream;
 import java.io.ObjectInputStream;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
+
 
 class Huffman {
 	public static int total=0;
@@ -107,6 +106,7 @@ class Huffman {
 	
 	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
+		reset();
 		
 		// read from a dat file
 		// 1. binary string
@@ -198,21 +198,7 @@ class Node implements Serializable {
 class Files {
 	// InputStream
 	// FileInputStream (bytes), DataInputStream (datatypes), ObjectInputStream (objects)
-	
-	public static String read0(String filename, int option) {
-		// reading data from a file
-		String str = "";
-//		
-//		if(option == 1)
-//			str = Files.file2comp(filename);
-//		if(option == 2)
-//			str = Files.compileString(filename);
-//		if(option == 3)
-//			str = Files.readSingleBytes(filename);
-//		
-		return str;
-	}
-	
+
 	// read a file char by char and record frequency of unique characters
 	public static String read(String filename) {
 		File f = new File(filename);
@@ -234,71 +220,6 @@ class Files {
 				return(e.getMessage());
 			}
 		} else return("File does not exist!");
-	}
-	
-	// read a file char by char and record frequency of unique characters
-	private static String fillArrays(String filename) {
-		File f = new File(filename);
-		if(f.exists()) {
-			try {
-				FileInputStream fis = new FileInputStream(f);
-				int i;
-				while (true) {
-					i = fis.read();
-					if(i == -1)
-						break;
-					
-					//Huffman.total++;
-					//System.out.print(i + " " + (char)i + " ");
-					//System.out.println();
-					// Huffman array operations
-					if(Huffman.charArr.contains(i)) {
-						int ind = Huffman.charArr.indexOf(i);
-						int val = Huffman.freqArr.get(ind);
-						Huffman.freqArr.set(ind, ++val);
-					} else {
-						Huffman.charArr.add(i);
-						Huffman.freqArr.add(1);
-					}
-				}
-				fis.close();
-			}
-			catch(Exception e) {
-				// System.out.println(e.getMessage());
-				return "";
-			}
-		} // else System.out.println("File does not exist!");
-		return "";
-	}
-	
-	// read a file char by char and translate into new codes
-	private static String compileString(String filename) {
-		String str = "";
-		StringBuilder sb = new StringBuilder();
-		File f = new File(filename);
-		if(f.exists()) {
-			try {
-				FileInputStream fis = new FileInputStream(f);
-				int i;
-				while (true) {
-					i = fis.read();
-					if(i == -1)
-						break;
-					
-					// Huffman string operations
-					//str += Huffman.dictArr.get(i);
-					sb.append(Huffman.dictArr.get(i));
-
-				}
-				fis.close();
-				str=sb.toString();
-			}
-			catch(Exception e) {
-				// System.out.println(e.getMessage());
-				return "";
-			}
-		} // else System.out.println("File does not exist!");
-		return str;
 	}
 	
 	// read a file char by char and output result plus generate original string
@@ -358,39 +279,6 @@ class Files {
 		return str;
 	}
 	
-	private static void readMultipleBytes(String filename) {
-		try {
-			FileInputStream fis = new FileInputStream(filename);
-			int i, k;
-			byte mas[] = new byte[20];
-			do {
-				k = fis.read(mas);
-				for(i=0; i<k; i++)
-					System.out.println(mas[i]);
-			} while (k != 0);
-			fis.close();
-		}
-		catch(Exception e) {
-			System.out.println(e.getMessage());
-			return;
-		}
-	}
-	
-	private static void readSmallBytes(String filename) {
-		try {
-			FileInputStream fis = new FileInputStream(filename);
-			int i;
-			byte mas[] = new byte[fis.available()];
-			fis.read(mas);
-			fis.close();
-			for(i=0; i<mas.length; i++)
-				System.out.println(mas[i]);
-		}
-		catch(Exception e) {
-			System.out.println(e.getMessage());
-			return;
-		}
-	}
 	
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
@@ -424,22 +312,6 @@ class Files {
 		return true;
 	}
 	
-	public static boolean write3(String filename, String data) {
-		// writing to a string file
-		try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
-            writer.write(data);
-            writer.close();
-            //System.out.println("Successfully wrote to the file.");
-        } catch (IOException e) {
-            //System.out.println("An error occurred.");
-            e.printStackTrace();
-            return false;
-        }
-		
-		return true;
-	}
-	
 	public static boolean write2(String filename, byte[] data) {
 		// writing byte array to a file
 		try {
@@ -453,61 +325,7 @@ class Files {
 		
 		return true;
 	}
-	
-	private static void writeSingleData(String filename, String[] data, List<Node> dict) throws IOException {
-		System.out.println("Result:");
-//		Byte[] toFile = new Byte[data.length+1];
-//		int nr;
-//		String dt = "";
-//		for(int i=0; i<data.length; i++) {
-//			dt = data[i].trim();
-//			nr = Integer.parseInt(dt, 2);
-//			System.out.println(dt + " " + nr);
-//			toFile[i] = (byte)nr;
-//		}
-//		toFile[data.length] = (byte)dt.length();
-		
-		
-		// serialize?
-		FileOutputStream fos = new FileOutputStream(filename);
-		ObjectOutputStream oos = new ObjectOutputStream(fos);
-		oos.writeObject(dict);
-		
-		//oos.writeObject(toFile);
-		//for(Byte b : toFile)
-			//oos.writeByte(b);
-		int nr;
-		String dt = "";
-		for(int i=0; i<data.length; i++) {
-			dt = data[i].trim();
-			nr = Integer.parseInt(dt, 2);
-			//System.out.println(dt + " " + nr);
-			oos.writeByte(nr);
-		}
-		oos.writeByte(dt.length());
-		
-		oos.close();
-		fos.close();
-	}
-	
-	private static void writeSingleBytes(String filename, String text) throws IOException {
-		FileOutputStream fos = new FileOutputStream(filename);
-		// String text = "to be or not to be";
-		byte buf[] = text.getBytes();
-		//for(byte b : buf)
-			//System.out.println(b);
-		for(int i=0; i<buf.length; i++)
-			fos.write(buf[i]);
-		fos.close();
-	}
-	
-	private static void writeMultipleBytes(String filename) throws IOException {
-		FileOutputStream fos = new FileOutputStream(filename);
-		String text = "to be or not to be";
-		byte buf[] = text.getBytes();
-		fos.write(buf);
-		fos.close();
-	}
+
 }
 
 
