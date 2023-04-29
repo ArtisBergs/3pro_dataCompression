@@ -2,20 +2,16 @@ package dataCompression;
 
 // 211RDB330 Kārlis Jurgens
 // 221RDB134 Artis Bergs
+// 221RDB076 Kamilla Saleniece
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.Scanner;
 import java.io.Serializable;
 import java.io.ObjectOutputStream;
@@ -24,35 +20,54 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 class Huffman {
+	
+	public static List<Integer> myFile = new ArrayList<Integer>();
+	
 	public static List<Integer> charArr = new ArrayList<Integer>();
 	public static List<Integer> freqArr = new ArrayList<Integer>();
-	public static List<Node> nodeArr = new ArrayList<Node>();
-	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
-	public static int total = 0;
 	
-	public static boolean encode(String sourceFile, String resultFile) {
-		// encode a file
+	public static List<Node> nodeArr = new ArrayList<Node>();
+	
+	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
+	
+	
+	public static void reset() {
 		charArr.clear();
 		freqArr.clear();
 		nodeArr.clear();
 		dictArr.clear();
-		total = 0;
+	}
+	
+	public static boolean encode(String sourceFile, String resultFile) {
+		// encode a file
 		
-		// read a file and fill arrays
-		long startTime = System.nanoTime();
-		Files.read(sourceFile, 1);
-		if(charArr.isEmpty())
+		// init
+		reset();
+		long startTime, endTime, duration;
+		
+		// read a file
+		System.out.println(Files.read(sourceFile, 1));
+		if(myFile.isEmpty())
 			return false;
-		long endTime = System.nanoTime();
-		long duration = (endTime - startTime);
-		System.out.println(duration/1000000);
+		
+		// Huffman frequency calculations
+		int ind, val;
+		for(int in : myFile) {
+			if(charArr.contains(in)) {
+				ind = charArr.indexOf(in);
+				val = freqArr.get(ind);
+				freqArr.set(ind, ++val);
+			} else {
+				charArr.add(in);
+				freqArr.add(1);
+			}
+		}
 		
 		// sort arrays
-		startTime = System.nanoTime();
 		boolean flag = false;
 		while(flag == false) {
 			flag = true;
-			for(int i=0; i<freqArr.size()-1 ; i++) {
+			for(int i=0; i<freqArr.size()-1; i++) {
 				if(freqArr.get(i) > freqArr.get(i+1)) {
 					flag = false;
 					
@@ -67,35 +82,14 @@ class Huffman {
 				}
 			}
 		}
-		endTime = System.nanoTime();
-		duration = (endTime - startTime);
-		System.out.println(duration/1000000);
 		
-		// output for testing purposes only
-		System.out.println("Count:");
-		//for(int i=0; i<charArr.size(); i++) {
-			//if(freqArr.get(i) != 0)
-				//System.out.println(charArr.get(i) + " " + freqArr.get(i));
-		//}
-		
-		// digging the tree
-		startTime = System.nanoTime();
-		Tree.build();
-		endTime = System.nanoTime();
-		duration = (endTime - startTime);
-		System.out.println(duration/1000000);
-		
-		// output2 for testing purposes only
-		System.out.println("Codes:");
-		//for(int num : dictArr.keySet())
-			//System.out.println(num + " " + dictArr.get(num));
+		// digging the Huffman tree
+		Node.arrInit();
+		Node.buildTree();
+		Node.codeGen(Huffman.nodeArr.get(0), "");
 		
 		// recreate data
-		startTime = System.nanoTime();
 		String codeStr = Files.read(sourceFile, 2);
-		endTime = System.nanoTime();
-		duration = (endTime - startTime);
-		System.out.println(duration/1000000);
 		
 		// output3 for testing purposes only
 		System.out.println("Code string:");
@@ -123,7 +117,7 @@ class Huffman {
 		Node curr = nodeArr.get(0);
 		
 		int temp = 0;
-		byte[] res = new byte[total];
+		byte[] res = new byte[myFile.size()];
 		
         int n = bin.length();
         for (int i = 0; i < n; i++) {
@@ -149,22 +143,24 @@ class Huffman {
 }
 
 
-class Tree {
-	public static void build() {
+class Node implements Serializable {
+	public int ch;
+	public int fr;
+	public Node left;
+	public Node right;
+	
+	// initialize Huffman node array
+	public static void arrInit() {
 		for(int i=0; i<Huffman.charArr.size(); i++) {
 			Node n = new Node();
 			n.ch = Huffman.charArr.get(i);
 			n.fr = Huffman.freqArr.get(i);
 			Huffman.nodeArr.add(n);
 		}
-		
-		sort();
-		
-		read(Huffman.nodeArr.get(0), "");
 	}
 	
-	private static void sort() {
-		// sort a tree in ascending order based on frequencies
+	// build a Huffman tree
+	public static void buildTree() {
 		while(Huffman.nodeArr.size() > 1) {
 			Node x = Huffman.nodeArr.get(0);
 			Node y = Huffman.nodeArr.get(1);
@@ -180,7 +176,7 @@ class Tree {
 
 			Huffman.nodeArr.add(z);
 			
-			// sort
+			// sort OR move newly added element into place to maintain asc order
 			for(int i=Huffman.nodeArr.size()-1; i>0; i--) {
 				if (Huffman.nodeArr.get(i).fr < Huffman.nodeArr.get(i-1).fr) {
 					Node temp = Huffman.nodeArr.get(i);
@@ -189,17 +185,10 @@ class Tree {
 				} else break;
 			}
 		}
-		
-		// output for testing purposes only
-		//System.out.println();
-		//for(Node n : Huffman.nodeArr)
-			//System.out.println(n.ch + " " + n.fr);
 	}
 	
-	private static void read(Node n, String code) {
-		// assign binary codes to each character
-		// output character and corresponding code array
-
+	// assign binary codes to each character and put into dictionary
+	public static void codeGen(Node n, String code) {
 		if(n == null)
 			return;
 		
@@ -208,33 +197,8 @@ class Tree {
 			return;
 		}
 		
-		read(n.left, code + "0");
-		read(n.right, code + "1");
-	}
-}
-
-
-class Node implements Serializable {
-	public int ch;
-	public int fr;
-	public Node left;
-	public Node right;
-	
-	public int getChar(){
-		// nolasa virsotnes vērtību
-		return this.ch;
-	}
-	public int getFreq(){
-		// nolasa virsotnes biežumu
-		return this.fr;
-	}
-	public Node getLeft(){
-		// nolasa virsotnes kreiso bērnu
-		return this.left;
-	}
-	public Node getRight(){
-		// nolasa virsotnes labo bērnu
-		return this.right;
+		codeGen(n.left, code + "0");
+		codeGen(n.right, code + "1");
 	}
 }
 
@@ -248,13 +212,36 @@ class Files {
 		String str = "";
 		
 		if(option == 1)
-			str = Files.fillArrays(filename);
+			str = Files.file2comp(filename);
 		if(option == 2)
 			str = Files.compileString(filename);
 		if(option == 3)
 			str = Files.readSingleBytes(filename);
 		
 		return str;
+	}
+	
+	// read a file char by char and record frequency of unique characters
+	private static String file2comp(String filename) {
+		File f = new File(filename);
+		if(f.exists()) {
+			try {
+				FileInputStream fis = new FileInputStream(f);
+				int i;
+				while (true) {
+					i = fis.read();
+					if(i == -1)
+						break;
+					// add bytes to array
+					Huffman.myFile.add(i);
+				}
+				fis.close();
+				return("Success!");
+			}
+			catch(Exception e) {
+				return(e.getMessage());
+			}
+		} else return("File does not exist!");
 	}
 	
 	// read a file char by char and record frequency of unique characters
@@ -269,7 +256,7 @@ class Files {
 					if(i == -1)
 						break;
 					
-					Huffman.total++;
+					//Huffman.total++;
 					//System.out.print(i + " " + (char)i + " ");
 					//System.out.println();
 					// Huffman array operations
@@ -524,16 +511,12 @@ class Files {
 
 
 public class Main {
-
 	public static void main(String[] args) {
 		Scanner sc = new Scanner(System.in);
 		String choiseStr;
 		String sourceFile, resultFile, firstFile, secondFile;
-		
 		loop: while (true) {
-			
 			choiseStr = sc.next();
-								
 			switch (choiseStr) {
 			case "comp":
 				System.out.print("source file name: ");
@@ -568,7 +551,6 @@ public class Main {
 				break loop;
 			}
 		}
-
 		sc.close();
 	}
 
@@ -591,7 +573,6 @@ public class Main {
 		catch (IOException ex) {
 			System.out.println(ex.getMessage());
 		}
-		
 	}
 	
 	public static boolean equal(String firstFile, String secondFile) {
@@ -615,7 +596,6 @@ public class Main {
 						f2.close();
 						return false;
 					}
-						
 				}
 			} while (k1 == 0 && k2 == 0);
 			f1.close();
@@ -632,5 +612,6 @@ public class Main {
 		// TODO insert information about authors
 		System.out.println("211RDB330 Kaarlis Jurgens");
 		System.out.println("221RDB134 Artis Bergs");
+		System.out.println("221RDB076 Kamilla Saleniece");
 	}
 }
