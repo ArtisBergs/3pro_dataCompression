@@ -43,7 +43,7 @@ class Huffman {
 		
 		// init
 		reset();
-		long startTime, endTime, duration;
+		// long startTime, endTime, duration;
 		
 		// read a file
 		System.out.println(Files.read(sourceFile, 1));
@@ -88,22 +88,17 @@ class Huffman {
 		Node.buildTree();
 		Node.codeGen(Huffman.nodeArr.get(0), "");
 		
-		// recreate data
-		String codeStr = Files.read(sourceFile, 2);
-		
-		// output3 for testing purposes only
-		System.out.println("Code string:");
-		//System.out.println(codeStr);
+		// generate binary data string
+		StringBuilder sb = new StringBuilder();
+		for(int in : myFile)
+			sb.append(Huffman.dictArr.get(in));
+		String codeStr = sb.toString();
 		
 		// divide binary string into 8-bit array
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
 		// convert bytes to integers and finish
-		startTime = System.nanoTime();
-		boolean res = Files.write(resultFile, arr, nodeArr);
-		endTime = System.nanoTime();
-		duration = (endTime - startTime);
-		System.out.println(duration/1000000);
+		boolean res = Files.write(resultFile, nodeArr, arr);
 		
 		return res;
 	}
@@ -407,10 +402,26 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	public static boolean write(String filename, String[] data, List<Node> dict) {
-		// writing to a dat file
+	// writing to a dat file
+	public static boolean write(String filename, List<Node> dict, String[] data) {
 		try {
-			Files.writeSingleData(filename, data, dict);
+			FileOutputStream fos = new FileOutputStream(filename);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			
+			oos.writeObject(dict);
+
+			int nr;
+			String dt = "";
+			for(int i=0; i<data.length; i++) {
+				dt = data[i]; // trim
+				nr = Integer.parseInt(dt, 2);
+				oos.writeByte(nr);
+			}
+			// last num represents significant digits of the last byte
+			oos.writeByte(dt.length());
+			
+			oos.close();
+			fos.close();
 		} catch(Exception e) {
 			System.out.println(e.getMessage());
 			return false;
