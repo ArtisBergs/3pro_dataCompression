@@ -19,7 +19,7 @@ import java.io.ObjectInputStream;
 
 
 class Huffman {
-	public static int total=0;
+	public static int total = 0; // original filebytes
 	public static List<Integer> myFile = new ArrayList<Integer>();
 	
 	public static List<Integer> charArr = new ArrayList<Integer>();
@@ -44,7 +44,6 @@ class Huffman {
 		
 		// init
 		reset();
-		// long startTime, endTime, duration;
 		
 		// read a file
 		Files.read(sourceFile);
@@ -98,7 +97,7 @@ class Huffman {
 		// divide binary string into 8-bit array
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
-		// convert bytes to integers and finish
+		// convert text bytes to integers and finish to file
 		boolean res = Files.write(resultFile, myFile.size(), nodeArr, arr);
 		
 		return res;
@@ -111,25 +110,15 @@ class Huffman {
 		// read from a dat file
 		// 1. binary string
 		// 2. and Node array
+		// 3. plus original filesize
 		String bin = Files.read2(sourceFile);
-
-		Node curr = nodeArr.get(0);
-		byte[] res = new byte[Huffman.total];
-
-		int n = bin.length();
-        int temp = 0;
-        for (int i=0; i < n; i++) {
-            if (bin.charAt(i) == '0') {
-                curr = curr.left;
-            } else {
-                curr = curr.right;
-            }
-            if (curr.left == null && curr.right == null) {
-                res[temp++] = (byte)curr.ch;
-                curr = nodeArr.get(0);
-            }
-        }
+		if(nodeArr.isEmpty())
+			return false;
+		
+		// generate original data by traversing the tree
+        byte[] res = Node.byteGen(bin);
         
+        // write original content in the form of bytes to avoid encoding issues
 		return Files.write2(resultFile, res);
 	}
 }
@@ -191,6 +180,30 @@ class Node implements Serializable {
 		
 		codeGen(n.left, code + "0");
 		codeGen(n.right, code + "1");
+	}
+	
+	// translate the code into original bytes
+	public static byte[] byteGen(String code) {
+		Node curr = Huffman.nodeArr.get(0);
+		
+		byte[] output = new byte[Huffman.total];
+
+		int temp = 0;
+        for (int i=0; i<code.length(); i++) {
+        	// steer the tree
+            if (code.charAt(i) == '0') {
+                curr = curr.left;
+            } else {
+                curr = curr.right;
+            }
+            // discover a leaf and reset
+            if (curr.left == null && curr.right == null) {
+                output[temp++] = (byte)curr.ch;
+                curr = Huffman.nodeArr.get(0);
+            }
+        }
+        
+        return output;
 	}
 }
 
@@ -289,9 +302,10 @@ class Files {
 			FileOutputStream fos = new FileOutputStream(filename);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
-			oos.writeInt(size);
-			oos.writeObject(dict);
+			oos.writeInt(size); // original filesize
+			oos.writeObject(dict); // dictionary
 
+			// databytes
 			int nr;
 			String dt = "";
 			for(int i=0; i<data.length; i++) {
