@@ -20,7 +20,7 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 class Huffman {
-	
+	public static int total=0;
 	public static List<Integer> myFile = new ArrayList<Integer>();
 	
 	public static List<Integer> charArr = new ArrayList<Integer>();
@@ -32,6 +32,8 @@ class Huffman {
 	
 	
 	public static void reset() {
+		total=0;
+		myFile.clear();
 		charArr.clear();
 		freqArr.clear();
 		nodeArr.clear();
@@ -46,7 +48,7 @@ class Huffman {
 		// long startTime, endTime, duration;
 		
 		// read a file
-		System.out.println(Files.read(sourceFile, 1));
+		Files.read(sourceFile);
 		if(myFile.isEmpty())
 			return false;
 		
@@ -98,42 +100,37 @@ class Huffman {
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
 		// convert bytes to integers and finish
-		boolean res = Files.write(resultFile, nodeArr, arr);
+		boolean res = Files.write(resultFile, myFile.size(), nodeArr, arr);
 		
 		return res;
 	}
 	
 	public static boolean decode(String sourceFile, String resultFile) {
 		// decode a file
-		StringBuilder sb = new StringBuilder();
 		
-		String bin = Files.read(sourceFile, 3);
-		//System.out.println(bin);
+		// read from a dat file
+		// 1. binary string
+		// 2. and Node array
+		String bin = Files.read2(sourceFile);
+
 		Node curr = nodeArr.get(0);
-		
-		int temp = 0;
-		byte[] res = new byte[myFile.size()];
-		
-        int n = bin.length();
-        for (int i = 0; i < n; i++) {
+		byte[] res = new byte[Huffman.total];
+
+		int n = bin.length();
+        int temp = 0;
+        for (int i=0; i < n; i++) {
             if (bin.charAt(i) == '0') {
                 curr = curr.left;
             } else {
                 curr = curr.right;
             }
             if (curr.left == null && curr.right == null) {
-            	//System.out.print(curr.ch + " " + (byte)curr.ch + " ");
-                //sb.append((char)curr.ch);
-                res[temp]=(byte)curr.ch;
-                temp++;
+                res[temp++] = (byte)curr.ch;
                 curr = nodeArr.get(0);
             }
         }
         
-        String ans = sb.toString();
-        System.out.println(ans + " " + temp);
-        
-		return Files.write3(resultFile, res);
+		return Files.write2(resultFile, res);
 	}
 }
 
@@ -202,22 +199,22 @@ class Files {
 	// InputStream
 	// FileInputStream (bytes), DataInputStream (datatypes), ObjectInputStream (objects)
 	
-	public static String read(String filename, int option) {
+	public static String read0(String filename, int option) {
 		// reading data from a file
 		String str = "";
-		
-		if(option == 1)
-			str = Files.file2comp(filename);
-		if(option == 2)
-			str = Files.compileString(filename);
-		if(option == 3)
-			str = Files.readSingleBytes(filename);
-		
+//		
+//		if(option == 1)
+//			str = Files.file2comp(filename);
+//		if(option == 2)
+//			str = Files.compileString(filename);
+//		if(option == 3)
+//			str = Files.readSingleBytes(filename);
+//		
 		return str;
 	}
 	
 	// read a file char by char and record frequency of unique characters
-	private static String file2comp(String filename) {
+	public static String read(String filename) {
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
@@ -305,24 +302,21 @@ class Files {
 	}
 	
 	// read a file char by char and output result plus generate original string
-	private static String readSingleBytes(String filename) {
+	public static String read2(String filename) {
 		StringBuilder sb = new StringBuilder();
 		String str = "";
-		int lastByte = 8;
+		
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
 				FileInputStream fis = new FileInputStream(f);
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				
+				Huffman.total = ois.readInt();
 				Huffman.nodeArr = (List<Node>)ois.readObject();
-				//for(Node n : ln)
-					//System.out.println(n.ch);
 				
-				//Byte[] nl = (Byte[])ois.readObject();
-				//for(Byte l : nl)
-					//System.out.println(l);
-				
+				int lastByte = 8;
+				String s = "";
 				int i;
 				while (true) {
 					i = ois.read();
@@ -330,8 +324,8 @@ class Files {
 						break;
 					
 					// Huffman string operations
-					lastByte = i;
-					String s = Integer.toBinaryString(i);
+					lastByte = i; // switch until the end
+					s = Integer.toBinaryString(i);
 					
 					// Huffman eachByte correction
 					if(s.length() < 8) {
@@ -341,13 +335,12 @@ class Files {
 						s = s.substring(s.length()-8, s.length());
 					}
 					
-					//System.out.println(s + " " + i);
-					//str += s;
 					sb.append(s);
 				}
 				
 				ois.close();
 				fis.close();
+				
 				str = sb.toString();
 				
 				// Huffman lastByte correction
@@ -358,10 +351,10 @@ class Files {
 				
 			}
 			catch(Exception e) {
-				// System.out.println(e.getMessage());
-				return "";
+				return (e.getMessage());
 			}
-		} // else System.out.println("File does not exist!");
+		} else return("File does not exist!");
+		
 		return str;
 	}
 	
@@ -403,11 +396,12 @@ class Files {
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
 	// writing to a dat file
-	public static boolean write(String filename, List<Node> dict, String[] data) {
+	public static boolean write(String filename, int size, List<Node> dict, String[] data) {
 		try {
 			FileOutputStream fos = new FileOutputStream(filename);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
+			oos.writeInt(size);
 			oos.writeObject(dict);
 
 			int nr;
@@ -430,7 +424,7 @@ class Files {
 		return true;
 	}
 	
-	public static boolean write2(String filename, String data) {
+	public static boolean write3(String filename, String data) {
 		// writing to a string file
 		try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(filename));
@@ -446,17 +440,13 @@ class Files {
 		return true;
 	}
 	
-	public static boolean write3(String filename, byte[] data) {
-		// writing to a string file
-		//for(byte d : data)
-			//System.out.println(d);
+	public static boolean write2(String filename, byte[] data) {
+		// writing byte array to a file
 		try {
             FileOutputStream writer = new FileOutputStream(filename);
             writer.write(data);
             writer.close();
-            //System.out.println("Successfully wrote to the file.");
         } catch (IOException e) {
-            //System.out.println("An error occurred.");
             e.printStackTrace();
             return false;
         }
