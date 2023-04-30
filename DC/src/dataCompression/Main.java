@@ -29,7 +29,7 @@ class Huffman {
 	
 	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
 	
-	public static void reset() {
+	private static void reset() {
 		total=0;
 		myFile.clear();
 		charArr.clear();
