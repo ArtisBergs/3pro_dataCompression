@@ -7,6 +7,8 @@ package dataCompression;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -14,8 +16,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.Scanner;
 import java.io.Serializable;
-import java.io.ObjectOutputStream;
-import java.io.ObjectInputStream;
 
 
 class Huffman {
@@ -28,7 +28,6 @@ class Huffman {
 	public static List<Node> nodeArr = new ArrayList<Node>();
 	
 	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
-	
 	
 	public static void reset() {
 		total=0;
@@ -46,9 +45,11 @@ class Huffman {
 		reset();
 		
 		// read a file
-		Files.read(sourceFile);
-		if(myFile.isEmpty())
+		System.out.println(Files.read(sourceFile));
+		if(myFile.isEmpty()) {
+			System.out.print("Outcome: ");
 			return false;
+		}
 		
 		// Huffman frequency calculations
 		int ind, val;
@@ -98,9 +99,8 @@ class Huffman {
 		String[] arr = codeStr.split("(?<=\\G.{8})");
 		
 		// convert text bytes to integers and finish to file
-		boolean res = Files.write(resultFile, myFile.size(), nodeArr, arr);
-		
-		return res;
+		System.out.print("Outcome: ");
+		return Files.write(resultFile, myFile.size(), nodeArr, arr);
 	}
 	
 	public static boolean decode(String sourceFile, String resultFile) {
@@ -111,14 +111,46 @@ class Huffman {
 		// 1. binary string
 		// 2. and Node array
 		// 3. plus original filesize
-		String bin = Files.read2(sourceFile);
-		if(nodeArr.isEmpty())
+		System.out.println(Files.read2(sourceFile));
+		if(nodeArr.isEmpty()) {
+			System.out.print("Outcome: ");
 			return false;
+		}
 		
-		// generate original data by traversing the tree
-        byte[] res = Node.byteGen(bin);
+		// string manipulation
+		String str = ""; // new string
+		StringBuilder sb = new StringBuilder();
+		
+		int lastByte = 8; // length of a byte in bits
+		String s = ""; // tmp
+		for(int in : myFile) {
+			lastByte = in; // switch until the end
+			s = Integer.toBinaryString(in);
+			
+			// eachByte correction
+			if(s.length() < 8) {
+				for(int c=s.length(); c<8; c++)
+					s = "0" + s;
+			}else if(s.length() > 8) {
+				s = s.substring(s.length()-8, s.length());
+			}
+			
+			sb.append(s);
+		}
+		
+		str = sb.toString();
+		
+		// and lastByte correction
+		if(lastByte < 8) {
+			String tmp = str.substring(str.length()-8-lastByte, str.length()-8);
+			str = str.substring(0, str.length()-16) + tmp;
+		} else str = str.substring(0, str.length()-8);
+		
+		// finally generate original data by traversing the tree
+        byte[] res = Node.byteGen(Huffman.nodeArr.get(0), str);
         
         // write original content in the form of bytes to avoid encoding issues
+        System.out.print("Outcome: ");
 		return Files.write2(resultFile, res);
 	}
 }
@@ -170,6 +202,7 @@ class Node implements Serializable {
 	
 	// assign binary codes to each character and put into dictionary
 	public static void codeGen(Node n, String code) {
+		// encoding
 		if(n == null)
 			return;
 		
@@ -180,11 +213,14 @@ class Node implements Serializable {
 		
 		codeGen(n.left, code + "0");
 		codeGen(n.right, code + "1");
+		
+		// return dic;
 	}
 	
 	// translate the code into original bytes
-	public static byte[] byteGen(String code) {
-		Node curr = Huffman.nodeArr.get(0);
+	public static byte[] byteGen(Node n, String code) {
+		// decoding
+		Node curr = n; // Huffman.nodeArr.get(0)
 		
 		byte[] output = new byte[Huffman.total];
 
@@ -199,7 +235,7 @@ class Node implements Serializable {
             // discover a leaf and reset
             if (curr.left == null && curr.right == null) {
                 output[temp++] = (byte)curr.ch;
-                curr = Huffman.nodeArr.get(0);
+                curr = n;
             }
         }
         
@@ -227,7 +263,7 @@ class Files {
 					Huffman.myFile.add(i);
 				}
 				fis.close();
-				return("Success!");
+				return("Read success!");
 			}
 			catch(Exception e) {
 				return(e.getMessage());
@@ -237,59 +273,32 @@ class Files {
 	
 	// read a file char by char and output result plus generate original string
 	public static String read2(String filename) {
-		StringBuilder sb = new StringBuilder();
-		String str = "";
-		
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
 				FileInputStream fis = new FileInputStream(f);
 				ObjectInputStream ois = new ObjectInputStream(fis);
 				
-				Huffman.total = ois.readInt();
-				Huffman.nodeArr = (List<Node>)ois.readObject();
+				Huffman.total = ois.readInt(); //part I
+				Huffman.nodeArr = (List<Node>)ois.readObject(); //part II
 				
-				int lastByte = 8;
-				String s = "";
-				int i;
+				int i; //part III
 				while (true) {
 					i = ois.read();
 					if(i == -1)
 						break;
-					
-					// Huffman string operations
-					lastByte = i; // switch until the end
-					s = Integer.toBinaryString(i);
-					
-					// Huffman eachByte correction
-					if(s.length() < 8) {
-						for(int c=s.length(); c<8; c++)
-							s = "0" + s;
-					}else if (s.length() > 8) {
-						s = s.substring(s.length()-8, s.length());
-					}
-					
-					sb.append(s);
+					// add bytes to array
+					Huffman.myFile.add(i);
 				}
 				
 				ois.close();
 				fis.close();
-				
-				str = sb.toString();
-				
-				// Huffman lastByte correction
-				if(lastByte < 8) {
-					String tmp = str.substring(str.length()-8-lastByte, str.length()-8);
-					str = str.substring(0, str.length()-16) + tmp;
-				} else str = str.substring(0, str.length()-8);
-				
+				return("Read success!");
 			}
 			catch(Exception e) {
-				return (e.getMessage());
+				return(e.getMessage());
 			}
 		} else return("File does not exist!");
-		
-		return str;
 	}
 	
 	
@@ -305,11 +314,11 @@ class Files {
 			oos.writeInt(size); // original filesize
 			oos.writeObject(dict); // dictionary
 
-			// databytes
+			// databytes (conversion)
 			int nr;
 			String dt = "";
 			for(int i=0; i<data.length; i++) {
-				dt = data[i]; // trim
+				dt = data[i]; // no need for trim
 				nr = Integer.parseInt(dt, 2);
 				oos.writeByte(nr);
 			}
@@ -322,12 +331,12 @@ class Files {
 			System.out.println(e.getMessage());
 			return false;
 		}
-		
 		return true;
 	}
 	
+	// re-creating original
 	public static boolean write2(String filename, byte[] data) {
-		// writing byte array to a file
+		// simply writing byte array to a file
 		try {
             FileOutputStream writer = new FileOutputStream(filename);
             writer.write(data);
@@ -336,10 +345,8 @@ class Files {
             e.printStackTrace();
             return false;
         }
-		
 		return true;
 	}
-
 }
 
 
