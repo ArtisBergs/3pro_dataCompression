@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -248,20 +249,22 @@ class Files {
 	// InputStream
 	// FileInputStream (bytes), DataInputStream (datatypes), ObjectInputStream (objects)
 
-	// read a file char by char and record frequency of unique characters
+	// read a file char by char and after record frequency of unique characters
 	public static String read(String filename) {
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
 				FileInputStream fis = new FileInputStream(f);
+				DataInputStream dis = new DataInputStream(fis);
 				int i;
 				while (true) {
-					i = fis.read();
+					i = dis.read();
 					if(i == -1)
 						break;
 					// add bytes to array
 					Huffman.myFile.add(i);
 				}
+				dis.close();
 				fis.close();
 				return("Read success!");
 			}
@@ -271,7 +274,7 @@ class Files {
 		} else return("File does not exist!");
 	}
 	
-	// read a file char by char and output result plus generate original string
+	// read a file char by char and after generate original string
 	public static String read2(String filename) {
 		File f = new File(filename);
 		if(f.exists()) {
@@ -305,8 +308,9 @@ class Files {
 	// OutputStream
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
-	// writing to a dat file
+	// creating a dat file
 	public static boolean write(String filename, int size, List<Node> dict, String[] data) {
+		// writing three objects one after another
 		try {
 			FileOutputStream fos = new FileOutputStream(filename);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
