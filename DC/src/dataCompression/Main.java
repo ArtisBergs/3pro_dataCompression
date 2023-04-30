@@ -9,7 +9,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
@@ -254,18 +253,16 @@ class Files {
 		File f = new File(filename);
 		if(f.exists()) {
 			try {
-				FileInputStream fis = new FileInputStream(f);
-				DataInputStream dis = new DataInputStream(fis);
+				FileInputStream reader = new FileInputStream(f);
 				int i;
 				while (true) {
-					i = dis.read();
+					i = reader.read();
 					if(i == -1)
 						break;
 					// add bytes to array
 					Huffman.myFile.add(i);
 				}
-				dis.close();
-				fis.close();
+				reader.close();
 				return("Read success!");
 			}
 			catch(Exception e) {
@@ -318,11 +315,11 @@ class Files {
 			oos.writeInt(size); // original filesize
 			oos.writeObject(dict); // dictionary
 
-			// databytes (conversion)
+			// databytes (including conversion)
 			int nr;
 			String dt = "";
 			for(int i=0; i<data.length; i++) {
-				dt = data[i]; // no need for trim
+				dt = data[i]; // trim
 				nr = Integer.parseInt(dt, 2);
 				oos.writeByte(nr);
 			}
