@@ -64,7 +64,7 @@ class Huffman {
 			}
 		}
 		
-		// sort arrays
+		// sort arrays in order
 		boolean flag = false;
 		while(flag == false) {
 			flag = true;
@@ -85,22 +85,33 @@ class Huffman {
 		}
 		
 		// digging the Huffman tree
-		Node.arrInit();
-		Node.buildTree();
-		Node.codeGen(Huffman.nodeArr.get(0), "");
+		Node.arrInit(); // initiate a tree
+		Node.buildTree(); // combine nodes and build a tree
+		Node.codeGen(Huffman.nodeArr.get(0), ""); // generate codes
 		
-		// generate binary data string
+		// compiling binary data string
 		StringBuilder sb = new StringBuilder();
 		for(int in : myFile)
 			sb.append(Huffman.dictArr.get(in));
 		String codeStr = sb.toString();
 		
-		// divide binary string into 8-bit array
+		// divide binary string into 8-bit array using magic regex
 		String[] arr = codeStr.split("(?<=\\G.{8})");
+		int arrLen = arr.length;
 		
-		// convert text bytes to integers and finish to file
+		// convert each binary string to corresponding byte
+		int[] mas = new int[arrLen+1];
+		String dt = "";
+		for(int i=0; i<arrLen; i++) {
+			dt = arr[i]; // trim?
+			mas[i] = Integer.parseInt(dt, 2);
+		}
+		// last # represents significant digits of the last byte
+		mas[arrLen] = dt.length();
+		
+		// outputting objects to file
 		System.out.print("Outcome: ");
-		return Files.write(resultFile, myFile.size(), nodeArr, arr);
+		return Files.write(resultFile, myFile.size(), nodeArr, mas);
 	}
 	
 	public static boolean decode(String sourceFile, String resultFile) {
@@ -259,7 +270,7 @@ class Files {
 					i = reader.read();
 					if(i == -1)
 						break;
-					// add bytes to array
+					// adding bytes to array
 					Huffman.myFile.add(i);
 				}
 				reader.close();
@@ -287,7 +298,7 @@ class Files {
 					i = ois.read();
 					if(i == -1)
 						break;
-					// add bytes to array
+					// add bytes to file-array
 					Huffman.myFile.add(i);
 				}
 				
@@ -306,25 +317,18 @@ class Files {
 	// FileOutputStream (bytes), DataOutputStream (datatypes), ObjectOutputStream (objects)
 	
 	// creating a dat file
-	public static boolean write(String filename, int size, List<Node> dict, String[] data) {
+	public static boolean write(String filename, int size, List<Node> dict, int[] data) {
 		// writing three objects one after another
 		try {
 			FileOutputStream fos = new FileOutputStream(filename);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
-			oos.writeInt(size); // original filesize
+			oos.writeInt(size); // original file-size
 			oos.writeObject(dict); // dictionary
 
-			// databytes (including conversion)
-			int nr;
-			String dt = "";
-			for(int i=0; i<data.length; i++) {
-				dt = data[i]; // trim
-				nr = Integer.parseInt(dt, 2);
-				oos.writeByte(nr);
-			}
-			// last num represents significant digits of the last byte
-			oos.writeByte(dt.length());
+			// databytes
+			for(int d : data)
+				oos.writeByte(d);
 			
 			oos.close();
 			fos.close();
