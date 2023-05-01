@@ -19,22 +19,17 @@ import java.io.Serializable;
 
 
 class Huffman {
-	public static int total = 0; // original filebytes
 	public static List<Integer> myFile = new ArrayList<Integer>();
-	
-	public static List<Integer> charArr = new ArrayList<Integer>();
-	public static List<Integer> freqArr = new ArrayList<Integer>();
-	
 	public static List<Node> nodeArr = new ArrayList<Node>();
+	public static int total = 0; // count original file-bytes
 	
-	public static Map<Integer, String> dictArr = new TreeMap<Integer, String>();
+	private static Map<Integer, String> dictArr =  new TreeMap<Integer, String>();
 	
 	private static void reset() {
-		total=0;
 		myFile.clear();
-		charArr.clear();
-		freqArr.clear();
 		nodeArr.clear();
+		total=0;
+		
 		dictArr.clear();
 	}
 	
@@ -51,7 +46,9 @@ class Huffman {
 			return false;
 		}
 		
-		// Huffman frequency calculations
+		// frequency calculations
+		List<Integer> charArr = new ArrayList<Integer>();
+		List<Integer> freqArr = new ArrayList<Integer>();
 		int ind, val;
 		for(int in : myFile) {
 			if(charArr.contains(in)) {
@@ -64,7 +61,7 @@ class Huffman {
 			}
 		}
 		
-		// sort arrays in order
+		// sort both arrays in order
 		boolean flag = false;
 		while(flag == false) {
 			flag = true;
@@ -84,15 +81,20 @@ class Huffman {
 			}
 		}
 		
-		// digging the Huffman tree
-		Node.arrInit(); // initiate a tree
-		Node.buildTree(); // combine nodes and build a tree
-		Node.codeGen(Huffman.nodeArr.get(0), ""); // generate codes
+		// initiate a tree of Nodes
+		for(int i=0; i<charArr.size(); i++) {
+			Node n = new Node();
+			n.ch = charArr.get(i);
+			n.fr = freqArr.get(i);
+			nodeArr.add(n);
+		}
+		buildTree(); // pair Nodes and build a tree
+		codeGen(nodeArr.get(0), ""); // generate codes
 		
 		// compiling binary data string
 		StringBuilder sb = new StringBuilder();
 		for(int in : myFile)
-			sb.append(Huffman.dictArr.get(in));
+			sb.append(dictArr.get(in));
 		String codeStr = sb.toString();
 		
 		// divide binary string into 8-bit array using magic regex
@@ -119,11 +121,11 @@ class Huffman {
 		reset();
 		
 		// read from a dat file
-		// 1. binary string
+		// 1. binary data-string
 		// 2. and Node array
 		// 3. plus original filesize
 		System.out.println(Files.read2(sourceFile));
-		if(nodeArr.isEmpty()) {
+		if(myFile.isEmpty()) {
 			System.out.print("Outcome: ");
 			return false;
 		}
@@ -135,8 +137,8 @@ class Huffman {
 		int lastByte = 8; // length of a byte in bits
 		String s = ""; // tmp
 		for(int in : myFile) {
-			lastByte = in; // switch until the end
-			s = Integer.toBinaryString(in);
+			lastByte = in; // switch until the last one
+			s = Integer.toBinaryString(in); // convert
 			
 			// eachByte correction
 			if(s.length() < 8) {
@@ -148,46 +150,27 @@ class Huffman {
 			
 			sb.append(s);
 		}
-		
 		str = sb.toString();
 		
-		// and lastByte correction
+		// execute lastByte correction
 		if(lastByte < 8) {
 			String tmp = str.substring(str.length()-8-lastByte, str.length()-8);
 			str = str.substring(0, str.length()-16) + tmp;
 		} else str = str.substring(0, str.length()-8);
 		
 		// finally generate original data by traversing the tree
-        byte[] res = Node.byteGen(Huffman.nodeArr.get(0), str);
+        byte[] res = byteGen(nodeArr.get(0), str);
         
         // write original content in the form of bytes to avoid encoding issues
         System.out.print("Outcome: ");
 		return Files.write2(resultFile, res);
 	}
-}
-
-
-class Node implements Serializable {
-	public int ch;
-	public int fr;
-	public Node left;
-	public Node right;
-	
-	// initialize Huffman node array
-	public static void arrInit() {
-		for(int i=0; i<Huffman.charArr.size(); i++) {
-			Node n = new Node();
-			n.ch = Huffman.charArr.get(i);
-			n.fr = Huffman.freqArr.get(i);
-			Huffman.nodeArr.add(n);
-		}
-	}
 	
 	// build a Huffman tree
-	public static void buildTree() {
-		while(Huffman.nodeArr.size() > 1) {
-			Node x = Huffman.nodeArr.get(0);
-			Node y = Huffman.nodeArr.get(1);
+	private static void buildTree() {
+		while(nodeArr.size() > 1) {
+			Node x = nodeArr.get(0);
+			Node y = nodeArr.get(1);
 			
 			Node z = new Node();
 			z.left = x;
@@ -195,45 +178,43 @@ class Node implements Serializable {
 			z.fr = x.fr + y.fr;
 			z.ch = -1;
 
-			Huffman.nodeArr.remove(0);
-			Huffman.nodeArr.remove(0);
+			nodeArr.remove(0);
+			nodeArr.remove(0);
 
-			Huffman.nodeArr.add(z);
+			nodeArr.add(z);
 			
 			// sort OR move newly added element into place to maintain asc order
-			for(int i=Huffman.nodeArr.size()-1; i>0; i--) {
-				if (Huffman.nodeArr.get(i).fr < Huffman.nodeArr.get(i-1).fr) {
-					Node temp = Huffman.nodeArr.get(i);
-					Huffman.nodeArr.set(i, Huffman.nodeArr.get(i-1));
-					Huffman.nodeArr.set(i-1, temp);
+			for(int i=nodeArr.size()-1; i>0; i--) {
+				if (nodeArr.get(i).fr < nodeArr.get(i-1).fr) {
+					Node temp = nodeArr.get(i);
+					nodeArr.set(i, nodeArr.get(i-1));
+					nodeArr.set(i-1, temp);
 				} else break;
 			}
 		}
 	}
 	
 	// assign binary codes to each character and put into dictionary
-	public static void codeGen(Node n, String code) {
-		// encoding
+	private static void codeGen(Node n, String code) {
+		// encoding (recursion)
 		if(n == null)
 			return;
 		
 		if(n.left == null && n.right == null) {
-			Huffman.dictArr.put(n.ch, code);
+			dictArr.put(n.ch, code);
 			return;
 		}
 		
 		codeGen(n.left, code + "0");
 		codeGen(n.right, code + "1");
-		
-		// return dic;
 	}
 	
 	// translate the code into original bytes
-	public static byte[] byteGen(Node n, String code) {
+	private static byte[] byteGen(Node n, String code) {
 		// decoding
 		Node curr = n; // Huffman.nodeArr.get(0)
 		
-		byte[] output = new byte[Huffman.total];
+		byte[] output = new byte[total];
 
 		int temp = 0;
         for (int i=0; i<code.length(); i++) {
@@ -252,6 +233,14 @@ class Node implements Serializable {
         
         return output;
 	}
+}
+
+
+class Node implements Serializable {
+	public int ch;
+	public int fr;
+	public Node left;
+	public Node right;
 }
 
 
